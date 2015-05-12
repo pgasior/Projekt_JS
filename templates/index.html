@@ -11,12 +11,12 @@
 
     <ul id="inbox">
         {% for message in messages %}
-          {% include "message.html" %}
+            {% raw message["html"] %}
         {% end %}
     </ul>
 
 
-    <form action="" class="navbar-fixed-bottom" id="messageform" method="post" role=form">
+    <form action="" class="navbar-fixed-bottom" id="messageform" method="post" role="form">
         <div class="container-fluid">
             <div class="row">
                 <div class="row">

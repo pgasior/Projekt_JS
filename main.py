@@ -68,9 +68,9 @@ class ChatSocketHandler(BaseHandler, tornado.websocket.WebSocketHandler):
     cache_file = None
     loaded = False
 
-    def __init__(self,application, request,**kwargs):
-        super().__init__(application, request)
-        ChatSocketHandler.load_old()
+    # def __init__(self,application, request,**kwargs):
+    #     super().__init__(application, request)
+    #     ChatSocketHandler.load_old()
 
 
 
@@ -81,7 +81,7 @@ class ChatSocketHandler(BaseHandler, tornado.websocket.WebSocketHandler):
 
     def open(self):
         ChatSocketHandler.waiters.add(self)
-        ChatSocketHandler.send_cache(self)
+        # ChatSocketHandler.send_cache(self)
         self.send_join_info(self)
 
     def on_close(self):
@@ -114,7 +114,7 @@ class ChatSocketHandler(BaseHandler, tornado.websocket.WebSocketHandler):
     def load_old(cls):
         if cls.loaded is False:
             if os.path.exists(cls.cache_file_name) is True:
-                print("Odczytuje")
+                # print("Laduje")
                 cls.cache_file=open(cls.cache_file_name,"rb")
                 cls.cache = pickle.load(cls.cache_file)
                 cls.cache_file.close()
@@ -165,6 +165,7 @@ def main():
     tornado.options.parse_command_line()
     app = Application()
     app.listen(options.port)
+    ChatSocketHandler.load_old()
     tornado.ioloop.IOLoop.instance().start()
 
 
