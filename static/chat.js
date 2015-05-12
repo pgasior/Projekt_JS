@@ -15,6 +15,7 @@ $(document).ready(function() {
             return false;
         }
     });
+    $('#inbox').perfectScrollbar();
 
     $("#message").select();
     updater.start();
@@ -26,6 +27,7 @@ window.onresize = function(event) {
         scroll=true;
     }
     fixHeight(scroll);
+    $("#inbox").perfectScrollbar('update');
 };
 
 function newMessage(form) {
