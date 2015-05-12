@@ -1,0 +1,10 @@
+<html>
+	<body>
+		<form action="/login" method="post">
+			Nick: <input type="text" name="name">
+			{% module xsrf_form_html() %}
+			<input type="submit" value="Zaloguj się">
+			
+		</form>
+	</body>
+</html>
