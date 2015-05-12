@@ -13,6 +13,7 @@ import tornado.web
 import tornado.websocket
 import os.path
 import uuid
+import pickle
 
 from tornado.options import define, options
 
@@ -33,7 +34,6 @@ class Application(tornado.web.Application):
             template_path=os.path.join(os.path.dirname(__file__), "templates"),
             static_path=os.path.join(os.path.dirname(__file__), "static"),
             xsrf_cookies=True,
-            autoreload=True,
         )
         tornado.web.Application.__init__(self, handlers, **settings)
 
@@ -64,6 +64,15 @@ class ChatSocketHandler(BaseHandler, tornado.websocket.WebSocketHandler):
     waiters = set()
     cache = []
     cache_size = 200
+    cache_file_name = "cache.dat"
+    cache_file = None
+
+    def __init__(self,application, request,**kwargs):
+        super().__init__(application, request)
+        ChatSocketHandler.load_old()
+
+
+
 
     def get_compression_options(self):
         # Non-None enables compression with default options.
@@ -71,15 +80,59 @@ class ChatSocketHandler(BaseHandler, tornado.websocket.WebSocketHandler):
 
     def open(self):
         ChatSocketHandler.waiters.add(self)
+        ChatSocketHandler.send_cache(self)
+        self.send_join_info(self)
 
     def on_close(self):
         ChatSocketHandler.waiters.remove(self)
+        self.send_part_info(self)
+
+    def send_join_info(self,user):
+        chat = {
+            "id": str(uuid.uuid4()),
+            "nick": tornado.escape.xhtml_escape(self.get_current_user().decode("utf-8")),
+            "body": "dołączył do chatu",
+            }
+        chat["html"] = tornado.escape.to_basestring(
+            self.render_string("join.html", message=chat, color="green"))
+        ChatSocketHandler.update_cache(chat)
+        ChatSocketHandler.send_updates(chat)
+
+    def send_part_info(self,user):
+        chat = {
+            "id": str(uuid.uuid4()),
+            "nick": tornado.escape.xhtml_escape(self.get_current_user().decode("utf-8")),
+            "body": "odłączył się",
+            }
+        chat["html"] = tornado.escape.to_basestring(
+            self.render_string("join.html", message=chat, color="blue"))
+        ChatSocketHandler.update_cache(chat)
+        ChatSocketHandler.send_updates(chat)
+
+    @classmethod
+    def load_old(cls):
+        if cls.cache_file is None:
+            if os.path.exists(cls.cache_file_name) is True:
+                print("Odczytuje")
+                cls.cache_file=open(cls.cache_file_name,"rb")
+                cls.cache = pickle.load(cls.cache_file)
+                cls.cache_file.close()
+        # cls.cache_file=open(cls.cache_file_name,"wb")
 
     @classmethod
     def update_cache(cls, chat):
         cls.cache.append(chat)
         if len(cls.cache) > cls.cache_size:
             cls.cache = cls.cache[-cls.cache_size:]
+        with open('cache.dat', 'wb') as f:
+            # Pickle the 'data' dictionary using the highest protocol available.
+            pickle.dump(cls.cache, f, pickle.HIGHEST_PROTOCOL)
+
+    @classmethod
+    def send_cache(cls, waiter):
+        for message in cls.cache:
+            waiter.write_message(message)
+
 
     @classmethod
     def send_updates(cls, chat):
