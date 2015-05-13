@@ -91,7 +91,7 @@ class ChatSocketHandler(BaseHandler, tornado.websocket.WebSocketHandler):
     def send_join_info(self,user):
         chat = {
             "id": str(uuid.uuid4()),
-            "nick": tornado.escape.xhtml_escape(self.get_current_user().decode("utf-8")),
+            "nick": tornado.escape.to_basestring(self.get_current_user().decode("utf-8")),
             "body": "dołączył do chatu",
             }
         chat["html"] = tornado.escape.to_basestring(
@@ -102,13 +102,15 @@ class ChatSocketHandler(BaseHandler, tornado.websocket.WebSocketHandler):
     def send_part_info(self,user):
         chat = {
             "id": str(uuid.uuid4()),
-            "nick": tornado.escape.xhtml_escape(self.get_current_user().decode("utf-8")),
+            "nick": tornado.escape.to_basestring(self.get_current_user().decode("utf-8")),
             "body": "odłączył się",
             }
         chat["html"] = tornado.escape.to_basestring(
             self.render_string("join.html", message=chat, color="blue"))
         ChatSocketHandler.update_cache(chat)
         ChatSocketHandler.send_updates(chat)
+
+    
 
     @classmethod
     def load_old(cls):
@@ -151,7 +153,7 @@ class ChatSocketHandler(BaseHandler, tornado.websocket.WebSocketHandler):
         parsed = tornado.escape.json_decode(message)
         chat = {
             "id": str(uuid.uuid4()),
-            "nick": tornado.escape.xhtml_escape(self.get_current_user().decode("utf-8")),
+            "nick": tornado.escape.to_basestring(self.get_current_user().decode("utf-8")),
             "body": parsed["body"],
             }
         chat["html"] = tornado.escape.to_basestring(
