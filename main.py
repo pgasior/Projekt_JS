@@ -69,20 +69,12 @@ class ChatSocketHandler(BaseHandler, tornado.websocket.WebSocketHandler):
     cache_file = None
     loaded = False
 
-    # def __init__(self,application, request,**kwargs):
-    #     super().__init__(application, request)
-    #     ChatSocketHandler.load_old()
-
-
-
-
     def get_compression_options(self):
         # Non-None enables compression with default options.
         return {}
 
     def open(self):
         ChatSocketHandler.waiters.add(self)
-        # ChatSocketHandler.send_cache(self)
         self.send_join_info(self)
 
     def on_close(self):
@@ -90,25 +82,11 @@ class ChatSocketHandler(BaseHandler, tornado.websocket.WebSocketHandler):
         self.send_part_info(self)
 
     def send_join_info(self,user):
-        # chat = {
-        #     "id": str(uuid.uuid4()),
-        #     "nick": tornado.escape.to_basestring(self.get_current_user().decode("utf-8")),
-        #     "body": "dołączył do chatu",
-        #     }
-        # chat["html"] = tornado.escape.to_basestring(
-        #     self.render_string("join.html", message=chat, color="green"))
         chat = self.make_chat("dołączył do chatu","join.html","green")
         ChatSocketHandler.update_cache(chat)
         ChatSocketHandler.send_updates(chat)
 
     def send_part_info(self,user):
-        # chat = {
-        #     "id": str(uuid.uuid4()),
-        #     "nick": tornado.escape.to_basestring(self.get_current_user().decode("utf-8")),
-        #     "body": "odłączył się",
-        #     }
-        # chat["html"] = tornado.escape.to_basestring(
-        #     self.render_string("join.html", message=chat, color="blue"))
         chat = self.make_chat("odłączył się","join.html","blue")
         ChatSocketHandler.update_cache(chat)
         ChatSocketHandler.send_updates(chat)
@@ -143,24 +121,16 @@ class ChatSocketHandler(BaseHandler, tornado.websocket.WebSocketHandler):
 
     @classmethod
     def send_updates(cls, chat):
-        logging.info("sending message to %d waiters", len(cls.waiters))
+        logging.info("Wysyłam wiadomosć do %d oczekujacych", len(cls.waiters))
         for waiter in cls.waiters:
             try:
                 waiter.write_message(chat)
             except:
-                logging.error("Error sending message", exc_info=True)
+                logging.error("Błąd przy wysyłaniu wiadomosći", exc_info=True)
 
     def on_message(self, message):
-        logging.info("got message %r", message)
-        logging.info("user %r", self.get_current_user())
+        logging.info("Otrzymałem wiadomość %r", message)
         parsed = tornado.escape.json_decode(message)
-        # chat = {
-        #     "id": str(uuid.uuid4()),
-        #     "nick": tornado.escape.to_basestring(self.get_current_user().decode("utf-8")),
-        #     "body": parsed["body"],
-        #     }
-        # chat["html"] = tornado.escape.to_basestring(
-        #     self.render_string("message.html", message=chat))
 
         chat = self.make_chat(parsed["body"])
 
